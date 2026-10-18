@@ -1,0 +1,78 @@
+{
+  "uid": "watch-steps-api",
+  "title": "Apple Watch - API Gateway & cache",
+  "tags": ["apple-watch", "api-gateway", "cache", "cloudwatch"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Cache hits vs misses (per minute)",
+      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "cloudwatch-watch-steps" },
+      "targets": [
+        {
+          "refId": "A", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "CacheHitCount",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Sum", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "CacheHitCount"
+        },
+        {
+          "refId": "B", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "CacheMissCount",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Sum", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "CacheMissCount"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Latency vs integration latency (avg, ms)",
+      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "cloudwatch", "uid": "cloudwatch-watch-steps" },
+      "targets": [
+        {
+          "refId": "A", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "Latency",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Average", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "Latency"
+        },
+        {
+          "refId": "B", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "IntegrationLatency",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Average", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "IntegrationLatency"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Requests and errors (per minute)",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "cloudwatch", "uid": "cloudwatch-watch-steps" },
+      "targets": [
+        {
+          "refId": "A", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "Count",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Sum", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "Requests"
+        },
+        {
+          "refId": "B", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "4XXError",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Sum", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "4XX"
+        },
+        {
+          "refId": "C", "region": "default", "namespace": "AWS/ApiGateway", "metricName": "5XXError",
+          "dimensions": { "ApiName": "${api_name}", "Stage": "${stage}" }, "statistic": "Sum", "period": "60",
+          "queryMode": "Metrics", "metricQueryType": 0, "metricEditorMode": 0, "matchExact": true, "label": "5XX"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] }
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+#!/bin/bash
+# Grafana OSS + Amazon Redshift data source, provisioned from Terraform.
+# Rendered by templatefile(); Terraform interpolations use the dollar-brace form,
+# literal shell variables are escaped with a double dollar.
+set -euxo pipefail
+exec > >(tee /var/log/grafana-bootstrap.log) 2>&1
+
+# 1. Grafana OSS repository + package
+cat > /etc/yum.repos.d/grafana.repo <<'REPO'
+[grafana]
+name=grafana
+baseurl=https://rpm.grafana.com
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+REPO
+
+dnf install -y grafana
+
+# 2. Official Amazon Redshift data source plugin
+# ("grafana cli" replaces the deprecated grafana-cli; it needs --homepath on Grafana 12+.)
+grafana cli --homepath /usr/share/grafana --pluginsDir /var/lib/grafana/plugins \
+  plugins install grafana-redshift-datasource
+
+# 3. Data source provisioning (AWS SDK default credential chain = instance profile)
+mkdir -p /etc/grafana/provisioning/datasources /etc/grafana/provisioning/dashboards /var/lib/grafana/dashboards
+
+cat > /etc/grafana/provisioning/datasources/redshift.yaml <<'EOF_DS'
+${datasource_yaml}
+EOF_DS
+
+# 4. Dashboard provider + dashboards
+cat > /etc/grafana/provisioning/dashboards/dashboards.yaml <<'EOF_DP'
+${dashboard_provider}
+EOF_DP
+
+%{ for name, body in dashboard_files ~}
+cat > /var/lib/grafana/dashboards/${name} <<'EOF_DB'
+${body}
+EOF_DB
+%{ endfor ~}
+
+chown -R root:grafana /etc/grafana/provisioning
+chown -R grafana:grafana /var/lib/grafana
+
+# 5. Start Grafana
+systemctl daemon-reload
+systemctl enable --now grafana-server

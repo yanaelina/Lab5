@@ -1,0 +1,105 @@
+{
+  "uid": "watch-steps",
+  "title": "Apple Watch - Steps",
+  "tags": ["apple-watch", "steps", "redshift"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Steps over time (per device, 1-minute buckets)",
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+          "format": 0,
+          "rawSQL": "SELECT DATE_TRUNC('minute', event_ts) AS time, device_id, SUM(steps) AS steps\nFROM public.watch_steps\nWHERE $__timeFilter(event_ts)\nGROUP BY 1, 2\nORDER BY 1"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": { "drawStyle": "line", "lineWidth": 2, "fillOpacity": 10, "showPoints": "auto" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total steps today (per device, UTC day)",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 9 },
+      "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+          "format": 1,
+          "rawSQL": "SELECT device_id, SUM(steps) AS total_steps\nFROM public.watch_steps\nWHERE event_ts >= TRUNC(GETDATE())\nGROUP BY device_id\nORDER BY device_id"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": { "values": true, "calcs": ["lastNotNull"], "fields": "/^total_steps$/" },
+        "orientation": "auto",
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      }
+    },
+    {
+      "id": 3,
+      "type": "barchart",
+      "title": "Daily totals - last 7 days (v_daily_steps)",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "grafana-redshift-datasource", "uid": "redshift-watch-steps" },
+          "format": 1,
+          "rawSQL": "SELECT TO_CHAR(day, 'YYYY-MM-DD') AS day, device_id, total_steps\nFROM public.v_daily_steps\nWHERE day >= TRUNC(GETDATE()) - 6\nORDER BY day, device_id"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "groupingToMatrix",
+          "options": { "columnField": "device_id", "rowField": "day", "valueField": "total_steps", "emptyValue": "zero" }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short", "decimals": 0, "color": { "mode": "palette-classic" } },
+        "overrides": []
+      },
+      "options": {
+        "xField": "day\\device_id",
+        "orientation": "vertical",
+        "groupWidth": 0.7,
+        "barWidth": 0.9,
+        "showValue": "auto",
+        "stacking": "none",
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "none" }
+      }
+    }
+  ]
+}

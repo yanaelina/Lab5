@@ -1,0 +1,22 @@
+# Copy to terraform.tfvars (git-ignored) and fill in. NEVER commit terraform.tfvars.
+
+# 8-64 chars, at least one upper, one lower, one digit; no / @ " ' space or backslash.
+redshift_admin_password = "Sesamo01"
+
+# AWS Academy denies redshift-serverless:* and grafana:CreateWorkspace, so there use:
+#   redshift_mode = "provisioned"
+#   grafana_mode  = "ec2"   (and set allowed_cidr)
+# Defaults ("serverless" / "managed") are for regular AWS accounts.
+redshift_mode = "serverless"
+grafana_mode  = "managed"
+# grafana_admin_user_ids = ["<identity-center-user-id>"]
+
+# grafana_mode = "ec2" only. Your public IP: curl -s https://checkip.amazonaws.com
+# allowed_cidr = "203.0.113.10/32"
+
+# Optional overrides (defaults shown)
+# aws_profile            = "academy"
+# aws_region             = "us-east-1"
+# redshift_base_capacity = 8
+# api_cache_ttl_seconds  = 300
+# api_cache_size         = "0.5"

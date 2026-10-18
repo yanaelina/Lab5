@@ -1,0 +1,31 @@
+apiVersion: 1
+
+datasources:
+  - name: Amazon Redshift
+    uid: redshift-watch-steps
+    type: grafana-redshift-datasource
+    isDefault: true
+    editable: true
+    jsonData:
+      # "default" = AWS SDK default credential chain (EC2 instance profile).
+      authType: default
+      defaultRegion: ${region}
+      # Queried through the Redshift Data API.
+%{ if serverless ~}
+      useServerless: true
+      workgroupName: ${workgroup}
+%{ else ~}
+      useServerless: false
+      clusterIdentifier: ${cluster_identifier}
+      dbUser: ${db_user}
+%{ endif ~}
+      database: ${database}
+      useManagedSecret: false
+
+  - name: CloudWatch
+    uid: cloudwatch-watch-steps
+    type: cloudwatch
+    editable: true
+    jsonData:
+      authType: default
+      defaultRegion: ${region}
